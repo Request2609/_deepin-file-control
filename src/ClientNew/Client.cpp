@@ -11,30 +11,6 @@
 int ProcessHandle(char info[3][128]) {
     
     signal(SIGINT, SigHandle) ;
-//  char buf[BUF_SIZE] ;
- //   int port = atoi(info[1]) ;
-    //开始监听文件操作
-    //连接服务器
-  //  std::shared_ptr<Fanotify> notify = Fanotify::getNotify() ;
-    //设置监控对象
-  //  fd_set rfd ;
-  //  int fanFd = notify->GetNotifyFD() ;
-//    selectEvent(fanFd, &rfd) ;
-    //info[2]为监控文件的路径
-  /*  int servFd = Connect(info[0], port) ;
-    if(servFd == 0) {
-        exit(1) ;
-    }
-    */
-/*    int msgId = IpcMsgCreate() ;
-    if(msgId < 0) {
-        return 0;
-    }
-  */
-
-    //FreeInfo::msgId = msgId ;
-    //FreeInfo::servFd= servFd ;
-    //Msg msg ;
     while(1) {
         //设置为1，接收来自各个见客户端的请求
      //   msg.type = MSG_TYPE ;

@@ -9,29 +9,61 @@ Fanotify :: ~Fanotify() {
     close(fanFd) ;
 }
 
-void Fanotify:: DetectOpenClose() {
-    std::cout << "设置开关" << std::endl ;
+void Fanotify:: DetectOpenClose(int fanFd) {
     int ret = fanotify_mark(fanFd, FAN_MARK_ADD, FAN_CLOSE|FAN_OPEN, AT_FDCWD, paths.c_str()) ;
     if(ret < 0) {
         std:: cout << __FILE__ << "    " << __LINE__ << std:: endl ;
     }
 }
 
+void Fanotify::SetIpPort(std::string ip, int port) {
+    this->ip = ip ;
+    this->port = port ;
+}
+
+void Fanotify :: InitFanotify() {
+    servFd = -1 ;
+    ep = std::make_shared<epOperation>() ;
+}
+
 //设置监控对象为目录下的子文件
 void Fanotify::SetNotifyObject(std::string path) {
-    this->paths = path ;
-    fanFd = fanotify_init(FAN_CLASS_CONTENT, O_RDWR) ;
+    std::string tmp = path ;
+    int fd = fanotify_init(FAN_CLASS_CONTENT, O_RDWR) ;
     if(fanFd < 0) {
         std :: cout << __FILE__ << "   " << __LINE__ << "     " << strerror(errno)<< std :: endl ;
         return ;
     }
     uint64_t fanMask = 0;
     fanMask |= FAN_OPEN_PERM ;
-    int ret = fanotify_mark(fanFd, FAN_MARK_ADD, fanMask|FAN_EVENT_ON_CHILD, 
+    int ret = fanotify_mark(fd, FAN_MARK_ADD, fanMask|FAN_EVENT_ON_CHILD, 
                             AT_FDCWD, path.c_str()) ;
     if(ret < 0) {
         std::cout << __LINE__ <<"   " __FILE__ << "   " << strerror(errno) << std::endl ;
     }
+    fdAbsolutePathPair.insert({fd, path}) ;
+    //设置读事件
+    ep->add(fd, POLLIN) ;
+    //递归遍历目录
+    DIR *dir ;
+    struct dirent *ptr ;
+    if((dir = opendir(path.c_str())) == NULL) {
+        std::cout << __LINE__ << "   " << __FILE__ << std::endl; 
+        exit(1) ;
+    }   
+    while((ptr = readdir(dir)) != NULL) {
+        //是目录，讲目录加到
+        if(ptr->d_type == 4) {
+            if(!strcmp(ptr->d_name, ".") || !strcmp(ptr->d_name, "..")) {
+                continue ;
+            }   
+            path = tmp+'/'+ptr->d_name  ;
+            SetNotifyObject(path) ;
+        }   
+        else {
+            continue ;
+        }   
+    }  
 }
 
 int Fanotify :: GetNotifyFD() {
@@ -39,80 +71,103 @@ int Fanotify :: GetNotifyFD() {
 }
 
 void Fanotify:: StartListen() {
-    char buf[4096];
     int len = 0 ;
-    fd_set rfd ;
+    int num = 0 ;
     //使用select监听
-    FD_ZERO(&rfd) ;
-    FD_SET(fanFd, &rfd) ;
-    std::cout << "开始监听" << std::endl ;
-    selectEvent(&rfd) ;
-    std:: cout << "发生事件" <<std::endl ;
-    while((len = read(fanFd, buf, sizeof(buf))) > 0) {
-        struct fanotify_event_metadata* metadata ;
-        char path[PATH_MAX] ;
-        int pathLen ;
-        metadata = (fanotify_event_metadata*)buf ;
-        if(metadata->fd >= 0) {
-            sprintf(path, "/proc/self/fd/%d", metadata->fd) ;
-            pathLen = readlink(path, path, sizeof(path)-1) ;
-            if(pathLen < 0) {
-                std :: cout << __LINE__ << "     " << __FILE__ << std::endl ;
-                exit(1) ;
+    if((num = ep->wait(-1, fdList)) > 0) {
+        for(int i=0; i<num; i++) {
+            char buf[4096];
+            len = read(fanFd, buf, sizeof(buf)) ;
+            struct fanotify_event_metadata* metadata ;
+            char path[PATH_MAX] ;
+            int pathLen ;
+            metadata = (fanotify_event_metadata*)buf ;
+            if(metadata->fd >= 0) {
+                sprintf(path, "/proc/self/fd/%d", metadata->fd) ;
+                pathLen = readlink(path, path, sizeof(path)-1) ;
+                if(pathLen < 0) {
+                    std :: cout << __LINE__ << "     " << __FILE__ << std::endl ;
+                    exit(1) ;
+                }
+                path[pathLen] = '\0' ;
+                int ret = GetEvent(fdList[i], metadata, len) ;
+                      
             }
-            path[pathLen] = '\0' ;
-            int ret = GetEvent(metadata, len) ;
         }
-        selectEvent(&rfd) ;
     }
     std::cout << strerror(errno) << std :: endl ;
 }
-int Fanotify::GetEvent(const struct fanotify_event_metadata* metadata, int len) {
+
+int Fanotify:: ConnectServer() {
+    int servFd = Connect(ip.c_str(), port) ;
+    if(servFd < 0) {
+        return -1 ;
+    }
+    return servFd ;
+}
+
+
+//处理标志位
+int Fanotify::ProcessBaseFlag(int flag, struct fanotify_event_metadata* metadata) {
+    int ret = -1 ;
+    switch(flag) {
+    //打开前将文件发送给服务器
+    case OPEN_PERMIT :
+        if(servFd == -1) {
+            //还没建立过链接
+            ret = ConnectServer() ;
+            if(ret < 0) {
+                //不会给内核发消息，用户打不开文件
+                return -1;
+            }
+            //可以连接服务器
+        }
+        else {
+            if(ret < 0) {
+                return -1 ;
+            }
+        }
+        ////////////////////////////////
+        ///向内核发送消息，设置允许打开标志位，并设置监控事件open close
+    case OPEN :
+        break ;
+    case CLOSE :
+        break ;
+    }
+}
+
+
+int Fanotify::GetEvent(int fanFd, const struct fanotify_event_metadata* metadata, int len) {
     std::string paths ;
+    int flag = 1 ;
     while(FAN_EVENT_OK(metadata, len)) {
         //处理matadata
         if(metadata->mask&FAN_OPEN) {
-            std :: cout << "文件被打开" << std:: endl ;
-            int fd = metadata->fd ;
-            /*const char* buf = "hello,it's a secret!" ;
-            write(fd, buf, strlen(buf)) ;*/
+            flag = OPENING ;
         }   
         if(metadata->mask&FAN_CLOSE) {
             if(metadata->mask&FAN_CLOSE_WRITE) {
-                std:: cout << "写关闭" << std:: endl  ;
-                return CLOSE_MODIFY ;
+                flag = CLOSE_MODIFY ;
             }   
             if(metadata->mask&FAN_CLOSE_NOWRITE) {
-                std :: cout << "关闭操作" <<std:: endl ;
-                return CLOSE ;
+                flag =  CLOSED ;
             }
         }
         if(metadata->mask&FAN_MODIFY){
-            return MODIFY ;
+            flag = MODIFY ;
         }
         if(metadata->mask&FAN_OPEN_PERM) {
-            std::cout << "open perm" << std::endl  ;   
-            return OPEN_PERMIT ;
-            HandlePerm(metadata) ;
+            flag = OPEN_PERMIT ;
+            HandlePerm(fanFd, metadata) ;
             //操作文件
-            OperationFile(metadata->fd) ;
-            DetectOpenClose() ;
+            DetectOpenClose(fanFd) ;
         }
         metadata = FAN_EVENT_NEXT(metadata, len) ;
     }   
-    return 1 ;
+    return flag ;
 }   
 
-void Fanotify::operationFile(int fd) {
-    const char* buf = "okokokokokokokok" ;
-    int ret = write(fd, buf, strlen(buf)) ;
-    if(ret < 0) {
-        std::cout << "写失败" <<std:: endl ;
-    }
-    close(fd) ;
-}
-
-int Fanotify::handlePerm(const struct fanotify_event_metadata *metadata) {
+int Fanotify::HandlePerm(int fanFd, const struct fanotify_event_metadata *metadata) {
     struct fanotify_response response_struct;
     int ret;
     response_struct.fd = metadata->fd;

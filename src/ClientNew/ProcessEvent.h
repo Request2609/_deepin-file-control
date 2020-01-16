@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <map>
 #include "Fanotify.h"
 #include "Judge.h"
 
@@ -14,10 +15,8 @@ public:
     void SetIpPortPath(std::string ip, int port, std::string path) ;
     void StartListen(std::string path) ;
     int SelectEvent(fd_set* rfd) ;
-    int ConnectServer() ;
-    int ProcessBaseFlag(int flag, struct fanotify_event_metadata* metadata) ;
     void BackUpToServer(struct fanotify_event_metadata* metadata) ;
-private:
+private:    
     std::shared_ptr<Fanotify>notify ;
     int fanFd ;
     std::string ip ;
