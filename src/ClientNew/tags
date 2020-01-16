@@ -1,0 +1,71 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ALIVE	Client.h	38;"	d
+BIN	Makefile	/^BIN = MainClient$/;"	m
+BUF_SIZE	Client.h	43;"	d
+CC	Makefile	/^CC=g++$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -g -lpthread -w $/;"	m
+CLOSE	Client.h	31;"	d
+Connect	Client.cpp	/^int Connect(const char* ip, const int port) {$/;"	f
+Data	Client.h	/^struct Data {$/;"	s
+FAIL	Client.h	35;"	d
+FINISH	Client.h	33;"	d
+FreeInfo	Client.h	/^namespace FreeInfo{$/;"	n
+GetConfInfo	GetConfInfo.cpp	/^int GetConfInfo(const char*confPath, char info[3][128]) {$/;"	f
+GetConfPath	GetConfInfo.cpp	/^int GetConfPath(char info[3][128]) {$/;"	f
+GetFileFd	Client.cpp	/^int GetFileFd(Data data) {$/;"	f
+GetMac	GetLocalInfo.cpp	/^int GetMac(char* macAddr) {$/;"	f
+INVAILD	Client.h	37;"	d
+IpcMsgCreate	MsgQueue.cpp	/^int IpcMsgCreate() {$/;"	f
+IpcMsgOpen	MsgQueue.cpp	/^int IpcMsgOpen() {$/;"	f
+IpcMsgRecv	MsgQueue.cpp	/^int IpcMsgRecv(int msgid, Msg& data) {$/;"	f
+IpcMsgSend	MsgQueue.cpp	/^int IpcMsgSend(int msgid, Msg& data) {$/;"	f
+IsConnect	Judge.cpp	/^int IsConnect(int &servFd,int msgId,int pid, const char*argv, const int port) {$/;"	f
+IsExist	Judge.cpp	/^int IsExist(Msg msg, int msgId) {$/;"	f
+IsLastRecoverRequest	Judge.cpp	/^int IsLastRecoverRequest(Msg& msg, map<string, int>&recFile) {$/;"	f
+IsMonitorDir	Judge.cpp	/^int IsMonitorDir(const char* hookPath, const char* monitorPath) {$/;"	f
+IsStoragedFile	Judge.cpp	/^int IsStoragedFile(Msg msg, map<string, int>&stFiles) {$/;"	f
+JudgeConnect	Judge.cpp	/^int  JudgeConnect(const char* IP, const int port, int & flag) {$/;"	f
+LEN	GetLocalInfo.h	12;"	d
+MAC_LEN	Client.h	41;"	d
+MAC_LEN	MsgQueue.h	7;"	d
+MSG_FILE	MsgQueue.h	8;"	d
+MSG_ID	MsgQueue.h	9;"	d
+MSG_TYPE	Client.h	27;"	d
+Msg	MsgQueue.h	/^struct Msg {$/;"	s
+OBJ	Makefile	/^OBJ = $(patsubst %cpp, %o, $(SRC))$/;"	m
+OPEN	Client.h	29;"	d
+Packet	MsgQueue.h	/^struct Packet {$/;"	s
+ProcessHandle	Client.cpp	/^int ProcessHandle(char info[3][128]) {$/;"	f
+RecoverFile	Client.cpp	/^int RecoverFile(struct Data data, int& fd) {$/;"	f
+RecoverRequest	Client.cpp	/^int RecoverRequest(int servFd, Msg msg, map<string, int>&recFile) {$/;"	f
+RecvData	Client.cpp	/^int RecvData(int servFd, int msgId) {$/;"	f
+SRC	Makefile	/^SRC = $(wildcard *.cpp)$/;"	m
+SendData	Client.cpp	/^void SendData(Msg &msg, const char* monitorPath, int servFd, int msgId) {$/;"	f
+SendFile	Client.cpp	/^int  SendFile(Msg msg, int servFd, map<string, int>&maps) {$/;"	f
+SendHookMsg	Client.cpp	/^int SendHookMsg(struct Data data, int msgId, int& fd) {$/;"	f
+SigHandle	Client.cpp	/^void SigHandle(int signo) {$/;"	f
+buf	Client.h	/^    char buf[BUF_SIZE] ;$/;"	m	struct:Data
+buf	MsgQueue.h	/^    Packet buf ;$/;"	m	struct:Msg
+flag	MsgQueue.h	/^    int flag ;$/;"	m	struct:Packet
+hookPid	Client.h	/^    int hookPid ;$/;"	m	struct:Data
+left	Client.h	/^    long left ;$/;"	m	struct:Data
+mac	Client.h	/^    char mac[MAC_LEN] ;$/;"	m	struct:Data
+main	MainClient.cpp	/^int main(int argc, char** argv) {$/;"	f
+mode	MsgQueue.h	/^    mode_t mode ;$/;"	m	struct:Packet
+msgId	Client.h	/^    static int msgId ;$/;"	m	namespace:FreeInfo
+pathName	Client.h	/^    char pathName[PATH_MAX] ;$/;"	m	struct:Data
+pathName	MsgQueue.h	/^    char pathName[PATH_MAX] ;$/;"	m	struct:Packet
+pid	MsgQueue.h	/^    pid_t pid ;$/;"	m	struct:Packet
+printError	GetLocalInfo.cpp	/^void printError(const char* fileName, const int line) {$/;"	f
+readn	ReadWrite.cpp	/^int readn(int fd, void *buf, int n) {$/;"	f
+right	Client.h	/^    long right ;$/;"	m	struct:Data
+servFd	Client.h	/^    static int servFd ;$/;"	m	namespace:FreeInfo
+type	Client.h	/^    int type ;$/;"	m	struct:Data
+type	MsgQueue.h	/^    int type;$/;"	m	struct:Packet
+type	MsgQueue.h	/^    long type ;$/;"	m	struct:Msg
+writen	ReadWrite.cpp	/^int writen(int fd, void *buf, int n){$/;"	f
