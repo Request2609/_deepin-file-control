@@ -25,6 +25,12 @@
 #include <memory>
 #include"MsgQueue.h"
 #include "Fanotify.h"
+#include "ThreadPool.h"
+#include"MsgQueue.h"
+#include"Judge.h"
+#include"ReadWrite.h"
+#include"GetLocalInfo.h"
+
 
 #define MSG_TYPE 1 
 //打开文件请求
@@ -66,20 +72,21 @@ struct Data {
     char buf[BUF_SIZE] ;
 } ;
 
+
 //处理业务的入口
 int ProcessHandle(char argv[3][128]) ;
 //连接服务器
 int Connect(const char* ip, const int port) ;
 //向服务端发送请求
-void SendData(Msg &msg, const char*monitorPath, int servFd, int msgId) ;
+void SendData(struct InfoNode, int servFd) ;
 //接收服务端请求
-int RecvData(int recvFd, int msgId) ;
+int RecvData(int servFd) ;
 //给服务器发送文件内容
-int SendFile(Msg msg, int servFd, std::map<std::string, int>&counts) ;
+int SendFile(int servFd, const string& name) ;
 //给hook发送消息
 int SendHookMsg(struct Data data, int msgId, int& fd) ;
 //回复文件内容
-int RecoverRequest(int servFd, Msg msg, std::map<std::string, int>&counts) ;
+int RecoverRequest(int servFd) ;
 //恢复文件内容
 int RecoverFile(struct Data data, int& fd) ;
 //处理中断信号

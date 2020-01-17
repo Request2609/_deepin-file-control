@@ -9,7 +9,8 @@ void ProcessEvent::StartListen(std::string path) {
     char buf[BUFSIZE] ;
     //切换工作目录
     chdir(path.c_str()) ;
-    //监控目录下的所有目录
+    //监控目录下的所有目录子文件
+    notify->InitFanotify() ;
     notify->SetNotifyObject(path.c_str()) ;
     
     int len = 0 ;

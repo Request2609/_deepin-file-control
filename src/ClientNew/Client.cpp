@@ -1,32 +1,34 @@
 #include"Client.h"
-#include"MsgQueue.h"
-#include"Judge.h"
-#include"ReadWrite.h"
-#include"GetLocalInfo.h"
-
 //客户端默认接收消息为1的消息
 //argv参数包含客户端要连接服务器的ip，端口
 //要监控的目录
 
 int ProcessHandle(char info[3][128]) {
-    
-    signal(SIGINT, SigHandle) ;
-    while(1) {
-        //设置为1，接收来自各个见客户端的请求
-     //   msg.type = MSG_TYPE ;
-        while(1) {
-            
-            string s = msg.buf.pathName;
-            if(s.substr(s.size()-9,s.size()-2) == "(deleted)")
-                bzero(msg.buf.pathName+strlen(msg.buf.pathName)-11,11);
 
-            if(IsConnect(servFd, msgId, msg.buf.pid, info[0], port) == 0) {
-                continue ;
+    std::shared_ptr<threadPool> pool = std::make_shared<threadPool>(8) ;
+    vector<InfoNode> ls ;
+    signal(SIGINT, SigHandle) ;
+    std::shared_ptr<Fanotify> notify = Fanotify::GetNotify() ;
+    int port = atoi(info[1]) ;
+    notify->SetIpPort(info[0], port); 
+    //设置监控路径
+    notify->SetNotifyObject(info[2]) ;
+    while(1) {
+        //开始监听
+        notify->StartListen(ls) ;
+        int servFd = notify->GetServFd() ;
+        //检测服务器是否存活
+        //服务器事件
+        int len = ls.size() ;
+        for(int i=0; i<len; i++) {
+            if(ls[i].type == -1&&ls[i].fanFd==ls[i].fileFd) {
+                pool->commit(RecvData, servFd) ;
             }
-            std::thread t1(SendData, std::ref(msg), info[2], servFd, msgId) ;
-            std::thread t2(RecvData, servFd, msgId) ;
-            t1.detach() ;
-            t2.detach() ;
+            else {
+                //监控的路径
+                //其他文件操作事件
+                pool->commit(SendData, ls[i], servFd) ;  
+            }
         }
     }
 }
@@ -59,69 +61,33 @@ int Connect(const char* ip, const int port) {
 
 
 //向服务端发送请求
-void SendData(Msg &msg, const char* monitorPath, int servFd, int msgId) {
     
-    static map<string, int>counts ;
-   //无论是打开文件还是关闭文件都判断是否为监控目录
-    int ret = IsMonitorDir(msg.buf.pathName, monitorPath) ;
-    //不是监控目录，向hook发送消息
-    if(ret == 0) {
-        msg.type = msg.buf.pid ;
-        msg.buf.type = FINISH ;
-        IpcMsgSend(msgId, msg);
-        return ;
-    }
-
-    //判断文件是否存在
-    if(IsExist(msg, msgId) == 0) {
-        return ;
-    }
+void SendData(struct InfoNode node, int servFd) {
+    
+    auto notify = Fanotify::GetNotify() ;
     //文件在监控目录下，并且存在
-    else {
-        int type = msg.buf.type ;
-        if(type == CLOSE) {
-            //close请求判断是否为最后一次close请求,是最后一次close请求的
-            //话,才恢复原来文件内容,否则不会恢复原来文件内容
-            int ret =  RecoverRequest(servFd, msg, counts) ;
-            if(ret < 0) {
-                printError(__FILE__, __LINE__) ;
-                return ;
-            }
-
-            //通知hook备份文件可以关闭了
-            if(ret == 0) {
-                msg.type = msg.buf.pid ;
-                msg.buf.type = FINISH ;
-                if(IpcMsgSend(msgId, msg) < 0) {
-                    printError(__FILE__, __LINE__) ;
-                    return ;
-                }
-            }
-        }   
-        if(type == OPEN) {
-            int ret = SendFile(msg, servFd, counts) ;
-            if(ret < 0) {
-                printError(__FILE__, __LINE__) ;
-                return ;
-            }
-            //返回值为0表示已经备份过该文件
-            if(ret == 0) {
-                msg.type = msg.buf.pid ;
-                msg.buf.type = FINISH ;
-                if(IpcMsgSend(msgId, msg) < 0) 
-                    printError(__FILE__, __LINE__) ;
-                return  ;
-            }
+    if(node.type == 0) {
+        //close请求判断是否为最后一次close请求,是最后一次close请求的
+        //话,才恢复原来文件内容,否则不会恢复原来文件内容
+        int ret =  RecoverRequest(servFd) ;
+        if(ret < 0) {
+            printError(__FILE__, __LINE__) ;
+            return ;
         }
     }
+
+    if(node.type == OPEN) {
+        int ret = SendFile(servFd, node.path.c_str()) ;
+        if(ret < 0) {
+            printError(__FILE__, __LINE__) ;
+            return ;
+        }
+    }
+    notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
 }
 
 //发送文件内容
-int  SendFile(Msg msg, int servFd, map<string, int>&maps) {
-
-    if(IsStoragedFile(msg, maps)) {
-        return 0 ;
-    }
+int  SendFile(int servFd,const string& name) {
     //判断是否为已经备份过的文件
     Data data ;
     memset(&data, 0, sizeof(data)) ;
@@ -130,9 +96,9 @@ int  SendFile(Msg msg, int servFd, map<string, int>&maps) {
     if(ret < 0 ) {
         return -1 ;
     }
-    data.hookPid = msg.buf.pid ;
-    strcpy(data.pathName, msg.buf.pathName) ;
-    int fd = open(data.pathName, O_RDWR) ;
+    strcpy(data.pathName, name.c_str()) ;
+    //打开文件
+    int fd = open(name.c_str(), O_RDWR) ;
     if(fd < 0) {
         printError(__FILE__, __LINE__) ;
         return -1 ;
@@ -163,7 +129,6 @@ int  SendFile(Msg msg, int servFd, map<string, int>&maps) {
             close(fd) ;
             break ;
         }
-
         //设置偏移量
         data.left = cur ;
         cur += ret ;
@@ -171,65 +136,62 @@ int  SendFile(Msg msg, int servFd, map<string, int>&maps) {
         //向服务器发送文件内容
         int res =  writen(servFd, &data, sizeof(data)) ;
         if(res < 0) {
-            Msg dd ;
-            dd.type = msg.buf.pid ;
-            dd.buf.type = FAIL ;
-            if(IpcMsgSend(FreeInfo::msgId, dd) < 0) {
-                printError(__FILE__, __LINE__) ;
-                return -1 ;
-            }
             printError(__FILE__, __LINE__) ;
             return  -1 ;
         }
-        counts++ ;
     }
-
     return 1 ;
 }   
 
 //接收服务端请求
-int RecvData(int servFd, int msgId) {
-
+int RecvData(int servFd) {
+    
+    auto notify = Fanotify::GetNotify() ;
     struct Data data ;
-    int fd = -1 ;
     int ret ,res ;
-    int count = 0 ;
     while(1) {
         memset(&data, 0, sizeof(data)) ;
         ret = readn(servFd, &data, sizeof(data)) ;
+        //服务器端关闭了
+        if(ret == 0) {
+            notify->RemoveServer() ;
+            cout << "客户端与服务器断开连接" << endl ;
+            return 1 ;
+        }
         //要是第一次open请求或者close请求，打开文件
         //其他情况下只写文件
-        if(count == 0){  
-            fd = GetFileFd(data) ;
-            if(fd == 0) {
-                printError(__FILE__, __LINE__) ;
-                return 0 ;
-            }
-            count ++ ;
-        }
-        if(ret < 0) {
-            printError(__FILE__, __LINE__) ;
-            break ;
-        }
+        struct ActiveNode* node ;
+        struct fanotify_event_metadata metadata ;
         switch(data.type) {
+        //表明服务器备份文件完成了
         case OPEN :
-            res = SendHookMsg(data, msgId, fd) ;
-            if(res == 0) {
-                printError(__FILE__, __LINE__) ;
-                exit(1) ;
+            //用户可以访问文件了
+            //根据路径获取fanotifyFd
+            node = Fanotify::GetHandleByPath(data.pathName) ;
+            if(node == NULL) {
+                cout << "在列表中没找到 "<< "    " <<__LINE__ << "  " << __FILE__ << endl ;
             }
-            close(fd) ;
+            //备份的文件的未关闭的文件描述符
+            metadata.fd = node->fileFd ;
+            notify->HandlePerm(node->fanFd, &metadata) ;
+            notify->DetectEvent(node->fanFd, FAN_CLOSE) ;
+            close(metadata.fd) ;
+            node->fileFd = -1 ;
+            notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
             return 0;
         case CLOSE :
-            res = RecoverFile(data, fd) ;
-            if(res == 1) {
-                Msg msg ;
-                msg.type = data.hookPid ;
-                msg.buf.type =FINISH ;
-                IpcMsgSend(msgId, msg) ;
-                close(fd) ;
-                return 0;
+            //文件完成
+            struct ActiveNode* anode = Fanotify::GetHandleByPath(data.pathName) ;
+            if(anode == NULL|anode->fileFd < 0) {
+                cout << __LINE__ << "   " << __FILE__ << endl ;
             }
+            res = RecoverFile(data, anode->fileFd) ;
+            if(res == 1) {
+                close(anode->fileFd) ;
+            }
+            Fanotify::Remove(anode->fanFd) ;
+            anode->fileFd = -1 ;
+            notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
             break ;
         }
     }
@@ -258,17 +220,8 @@ int SendHookMsg(struct Data data, int msgId, int& fd) {
 }
 
 //发送恢复文件请求
-int RecoverRequest(int servFd, Msg msg, map<string, int>&recFile) {
+int RecoverRequest(int servFd) {
     
-    //mute::mute2.lock() ;
-    //不是最后一次close请求或者是在map里寻找文件名失败
-    if(!IsLastRecoverRequest(msg, recFile)) {
-        if(msg.buf.pid == -1) {
-            return -1 ;
-        }
-        return 0 ;
-    }
-
     Data data ;
     memset(&data, 0, sizeof(data)) ;
     data.type = CLOSE ;
@@ -277,13 +230,11 @@ int RecoverRequest(int servFd, Msg msg, map<string, int>&recFile) {
         printError(__FILE__, __LINE__) ;
         return -1 ;
     }
-    data.hookPid = msg.buf.pid ;
-    strcpy(data.pathName, msg.buf.pathName) ;
+
     if((ret = writen(servFd, &data, sizeof(data))) < 0) {
         printError(__FILE__, __LINE__) ;
         return -1 ;
     }
-
     return 1 ;
 }
 
