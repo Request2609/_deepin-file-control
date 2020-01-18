@@ -11,6 +11,7 @@ int GetConfInfo(const char*confPath, char info[3][128]) {
     }
     FILE* fp = fopen(confPath, "r") ;
     if(fp == NULL) {
+        cout << strerror(errno) << endl ;
         printError(__FILE__, __LINE__) ;
         return 0 ;
     }
@@ -25,7 +26,7 @@ int GetConfInfo(const char*confPath, char info[3][128]) {
 }
 
 int GetConfPath(char info[3][128]) {
-      
+    
     char paths[PATH_MAX] ;
     const char*p = getcwd(paths, PATH_MAX) ;
     if(p == NULL) {
@@ -35,16 +36,15 @@ int GetConfPath(char info[3][128]) {
     std::string::size_type position ;
     //获取配置文件头部路径
     std::string s  = p ; 
-    position = s.find("_deepin-file-control") ;
-
+    position = s.find("src") ;
     if(position == s.npos) {
         printError(__FILE__, __LINE__) ;
         return 0;
-    }   
-    s[position] = '\0' ;
-    strcpy(paths, s.c_str()) ;
-    strcat(paths, "_deepin-file-control/conf/info") ;
-    int ret = GetConfInfo(paths, info) ;
+    }
+    s = s.substr(0, position) ;
+    s = s+"conf/info" ;
+    cout << "路径:" << s << endl ;
+    int ret = GetConfInfo(s.c_str(), info) ;
     if(ret == 0) {
         return 0 ;
     }

@@ -23,6 +23,7 @@
 #include "Epoll.h"
 #include "Client.h"
 
+class epOperation ;
 const int OPENING = 1 ;
 const int MODIFY = 2 ;
 const int CLOSE_MODIFY = 3;
@@ -48,15 +49,9 @@ struct ActiveNode {
 } ;
 
 class Fanotify {
+    Fanotify();
 public:
     ~Fanotify() ;
-
-    static std::shared_ptr<Fanotify>GetNotify() {
-        if(notify == nullptr) {
-            notify = std::make_shared<Fanotify>() ;
-        }
-        return notify ;
-    } 
     //选择检测对象
     void SetNotifyObject(std::string path) ;
     //获取句柄
@@ -69,13 +64,14 @@ public:
     int ConnectServer() ;
     //在监控期间可以操作文件
     int GetEvent(int fanFd, const struct fanotify_event_metadata* metadata, int len) ;
-    int HandlePerm(int, const struct fanotify_event_metadata* metadata) ;
+    int HandlePerm(int, int, const struct fanotify_event_metadata* metadata) ;
     int RemoveServer() ;
-    void InitFanotify() ;
-    int ProcessBaseFlag( int flag) ;
+    void InitFanotify(std::string ip, int port) ;
+    int ProcessBaseFlag(int flag, struct fanotify_event_metadata* metadata) ;
     void SetIpPort(std::string ip, int port) ;
     void OperateFile(struct fanotify_event_metadata* metadata) ;
     int GetServFd() { return servFd ;}
+    static std::shared_ptr<Fanotify> GetNotify() ;
     static int Modify(string path, struct fanotify_event_metadata* metadata) ;
     static ActiveNode* GetHandleByPath(string name) ;
     static void Remove(int) ;
@@ -86,10 +82,7 @@ private:
     std::string ip ;
     int port ;
     int servFd ;
-    Fanotify() ;
     vector<int>fdList ;
-    //设置检测对象的
-    std::string paths ;
     //使用单实例模式
     static std::shared_ptr<Fanotify>notify ;
     std::map<int, std::string>fdAbsolutePathPair ;
@@ -98,5 +91,4 @@ private:
     shared_ptr<epOperation>ep ;
 };
 
-vector<ActiveNode> Fanotify::activeMap ;
 

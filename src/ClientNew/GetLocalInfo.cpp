@@ -12,7 +12,8 @@ void printError(const char* fileName, const int line) {
             lt->tm_min, lt->tm_sec) ;
     int fd = open("syslog/log", O_WRONLY|O_APPEND) ;
     if(fd < 0) {
-        exit(1) ;
+        std::cout << __LINE__ << "   " <<__FILE__ <<  std::endl ;
+        return  ;
     }
     char info[LEN] ;
     sprintf(info, "出错文件名：%s，出错行号：%d\n", fileName, line) ;
@@ -22,10 +23,11 @@ void printError(const char* fileName, const int line) {
 }
 
 int GetMac(char* macAddr) {
+    strcpy(macAddr, "a0:c5:89:ba:4c:da") ;
+    return 1 ;
     struct ifreq ifr;
     struct ifconf ifc;
     char buf[2048];
-
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     if (sock == -1) {
         printf("socket error\n");

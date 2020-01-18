@@ -3,7 +3,6 @@
 #include"GetConfInfo.h"
 
 int main(int argc, char** argv) {
-    
     char info[3][128] ;
     int ret  = GetConfPath(info) ;
     if(ret < 0) {

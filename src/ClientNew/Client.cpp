@@ -7,10 +7,14 @@ int ProcessHandle(char info[3][128]) {
 
     std::shared_ptr<threadPool> pool = std::make_shared<threadPool>(8) ;
     vector<InfoNode> ls ;
-    signal(SIGINT, SigHandle) ;
+ //   signal(SIGINT, SigHandle) ;
     std::shared_ptr<Fanotify> notify = Fanotify::GetNotify() ;
     int port = atoi(info[1]) ;
-    notify->SetIpPort(info[0], port); 
+    //切换工作路径到监控目录
+    chdir(info[2]) ;
+    //初始化端口地址和IP地址
+    
+    notify->InitFanotify(info[0], port) ;
     //设置监控路径
     notify->SetNotifyObject(info[2]) ;
     while(1) {
@@ -21,13 +25,14 @@ int ProcessHandle(char info[3][128]) {
         //服务器事件
         int len = ls.size() ;
         for(int i=0; i<len; i++) {
-            if(ls[i].type == -1&&ls[i].fanFd==ls[i].fileFd) {
-                pool->commit(RecvData, servFd) ;
+            if(ls[i].fanFd==ls[i].fileFd&&ls[i].type==-1) {
+                RecvData(servFd) ;
             }
             else {
+                cout << "发送请求" << endl ;
                 //监控的路径
                 //其他文件操作事件
-                pool->commit(SendData, ls[i], servFd) ;  
+                SendData(ls[i], servFd) ;  
             }
         }
     }
@@ -38,7 +43,7 @@ int Connect(const char* ip, const int port) {
     
     int fd = socket(AF_INET, SOCK_STREAM, 0) ;
     if(fd < 0) {
-        printError(__FILE__, __LINE__) ;
+        cout << __LINE__ <<"   " << __FILE__ << endl ;
         return 0 ;
     }
     
@@ -47,13 +52,12 @@ int Connect(const char* ip, const int port) {
     addr.sin_port = htons(port) ;
     int ret = inet_aton(ip, &addr.sin_addr) ;
     if(ret < 0) {
-        printError(__FILE__, __LINE__) ;
+       cout << __LINE__ <<"   " << __FILE__ << endl ;
         return 0 ;
     }
-    
     ret = connect(fd, (struct sockaddr*)&addr, sizeof(addr)) ;
     if(ret < 0) {
-        printError(__FILE__, __LINE__) ;
+        cout << __LINE__ <<"   " << __FILE__ <<"    " << strerror(errno)<< endl ;
         return 0 ;
     }
     return fd ;
@@ -61,15 +65,16 @@ int Connect(const char* ip, const int port) {
 
 
 //向服务端发送请求
-    
+
 void SendData(struct InfoNode node, int servFd) {
-    
+
     auto notify = Fanotify::GetNotify() ;
     //文件在监控目录下，并且存在
-    if(node.type == 0) {
+    if(node.type == CLOSE) {
+        
         //close请求判断是否为最后一次close请求,是最后一次close请求的
         //话,才恢复原来文件内容,否则不会恢复原来文件内容
-        int ret =  RecoverRequest(servFd) ;
+        int ret =  RecoverRequest(node, servFd) ;
         if(ret < 0) {
             printError(__FILE__, __LINE__) ;
             return ;
@@ -77,17 +82,29 @@ void SendData(struct InfoNode node, int servFd) {
     }
 
     if(node.type == OPEN) {
-        int ret = SendFile(servFd, node.path.c_str()) ;
+        int ret = SendFile(servFd, node) ;
         if(ret < 0) {
             printError(__FILE__, __LINE__) ;
             return ;
         }
+        //修改文件内容
+        ModifyFile(node.fileFd) ;
+        //关闭该文件事件
+        close(node.fileFd) ;
+        //设置监控关闭事件
+        notify->DetectEvent(node.fanFd, FAN_CLOSE) ;
     }
     notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
 }
 
+void ModifyFile(int fd) {
+    ftruncate(fd, 0) ;
+    lseek(fd, 0, 0) ;
+    const char* buf = "It's a secret!" ;
+    write(fd, buf, strlen(buf)) ;
+}
 //发送文件内容
-int  SendFile(int servFd,const string& name) {
+int  SendFile(int servFd, const struct InfoNode& node) {
     //判断是否为已经备份过的文件
     Data data ;
     memset(&data, 0, sizeof(data)) ;
@@ -96,26 +113,22 @@ int  SendFile(int servFd,const string& name) {
     if(ret < 0 ) {
         return -1 ;
     }
-    strcpy(data.pathName, name.c_str()) ;
+    auto notify = Fanotify::GetNotify() ;
+    struct fanotify_event_metadata tmp ;
+    tmp.fd = node.fileFd ;
+    notify->HandlePerm(FAN_ALLOW, node.fanFd, &tmp) ;
+    strcpy(data.pathName, node.path.c_str()) ;
     //打开文件
-    int fd = open(name.c_str(), O_RDWR) ;
-    if(fd < 0) {
-        printError(__FILE__, __LINE__) ;
-        return -1 ;
-    }
-    //客户端向服务器至少发送两次消息
-    int counts = 0;
     long cur = 0 ; 
     while(1) {
         //读文件内容
-        int ret = read(fd, data.buf, sizeof(data.buf)) ;
+        int ret = read(node.fileFd, data.buf, sizeof(data.buf)) ;
         if(ret < 0) {
             printError(__FILE__, __LINE__) ;
             return -1 ;
         }
-
         //如果将文件读完了
-        if(ret ==0&& counts) {
+        if(ret ==0) {
             data.type = OPEN ;
             memset(data.buf, 0, sizeof(data.buf)) ;
             //通知发送文件结束
@@ -126,7 +139,6 @@ int  SendFile(int servFd,const string& name) {
                 printError(__FILE__, __LINE__);
                 return -1 ;
             }
-            close(fd) ;
             break ;
         }
         //设置偏移量
@@ -145,7 +157,6 @@ int  SendFile(int servFd,const string& name) {
 
 //接收服务端请求
 int RecvData(int servFd) {
-    
     auto notify = Fanotify::GetNotify() ;
     struct Data data ;
     int ret ,res ;
@@ -155,16 +166,20 @@ int RecvData(int servFd) {
         //服务器端关闭了
         if(ret == 0) {
             notify->RemoveServer() ;
-            cout << "客户端与服务器断开连接" << endl ;
             return 1 ;
         }
+        cout << "读取数据" << data.buf << endl ;
         //要是第一次open请求或者close请求，打开文件
         //其他情况下只写文件
-        struct ActiveNode* node ;
-        struct fanotify_event_metadata metadata ;
+    //    struct ActiveNode* node ;
+      //  struct fanotify_event_metadata metadata ;
         switch(data.type) {
         //表明服务器备份文件完成了
-        case OPEN :
+        case OPEN:
+            if(!strcmp(data.buf, "OK")) {
+                cout << "备份完成" << endl ;
+            }
+            /*()cout << "服务端接收完成消息" << data.buf<< endl ;
             //用户可以访问文件了
             //根据路径获取fanotifyFd
             node = Fanotify::GetHandleByPath(data.pathName) ;
@@ -173,13 +188,13 @@ int RecvData(int servFd) {
             }
             //备份的文件的未关闭的文件描述符
             metadata.fd = node->fileFd ;
-            notify->HandlePerm(node->fanFd, &metadata) ;
-            notify->DetectEvent(node->fanFd, FAN_CLOSE) ;
+         //   notify->HandlePerm(FAN_ALLOW, node->fanFd, &metadata) ;
             close(metadata.fd) ;
-            node->fileFd = -1 ;
-            notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
+            node->fileFd = -1 ;*/
+ //           notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
             return 0;
         case CLOSE :
+            cout << "接收恢复文件数据!" << endl ;
             //文件完成
             struct ActiveNode* anode = Fanotify::GetHandleByPath(data.pathName) ;
             if(anode == NULL|anode->fileFd < 0) {
@@ -188,9 +203,9 @@ int RecvData(int servFd) {
             res = RecoverFile(data, anode->fileFd) ;
             if(res == 1) {
                 close(anode->fileFd) ;
+                anode->fileFd = -1 ;
+                Fanotify::Remove(anode->fanFd) ;
             }
-            Fanotify::Remove(anode->fanFd) ;
-            anode->fileFd = -1 ;
             notify->ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
             break ;
         }
@@ -220,17 +235,16 @@ int SendHookMsg(struct Data data, int msgId, int& fd) {
 }
 
 //发送恢复文件请求
-int RecoverRequest(int servFd) {
-    
+int RecoverRequest(const struct InfoNode& node, int servFd) {
     Data data ;
     memset(&data, 0, sizeof(data)) ;
     data.type = CLOSE ;
     int ret = GetMac(data.mac) ;
+    strcpy(data.pathName, node.path.c_str()) ;
     if(ret < 0) {
         printError(__FILE__, __LINE__) ;
         return -1 ;
     }
-
     if((ret = writen(servFd, &data, sizeof(data))) < 0) {
         printError(__FILE__, __LINE__) ;
         return -1 ;
@@ -244,7 +258,6 @@ int RecoverFile(struct Data data, int& fd) {
         close(fd) ;
         return 1 ;
     }
-
     lseek(fd, data.left, SEEK_SET) ;
     int ret = write(fd, data.buf, data.right-data.left) ;
     if(ret < 0) {
@@ -286,10 +299,10 @@ int GetFileFd(Data data) {
 //接收到异常信号
 void SigHandle(int signo) {
 
-    if(signo == SIGINT) {
-        close(FreeInfo::servFd) ;
-        msgctl(FreeInfo::msgId, IPC_RMID, 0) ;
+  //  if(signo == SIGINT) {
+        //close(FreeInfo::servFd) ;
+        // msgctl(FreeInfo::msgId, IPC_RMID, 0) ;
         return ;
-    }
+    //}
 }
 

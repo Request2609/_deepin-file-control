@@ -1,8 +1,16 @@
 #include "Fanotify.h"
 
 std::shared_ptr<Fanotify>Fanotify::notify = nullptr ;
+vector<ActiveNode> Fanotify::activeMap ;
 
 Fanotify :: Fanotify() {
+}
+
+std::shared_ptr<Fanotify>Fanotify::GetNotify() {
+    if(notify == nullptr) {
+        notify = std::shared_ptr<Fanotify>(new Fanotify()) ;
+    }
+    return notify ;
 }
 
 Fanotify :: ~Fanotify() {
@@ -12,7 +20,8 @@ Fanotify :: ~Fanotify() {
 }
 
 void Fanotify:: DetectEvent(int fanFd, int mask) {
-    int ret = fanotify_mark(fanFd, FAN_MARK_ADD, mask, AT_FDCWD, paths.c_str()) ;
+    string path = fdAbsolutePathPair[fanFd] ;
+    int ret = fanotify_mark(fanFd, FAN_MARK_ADD, mask, AT_FDCWD, path.c_str()) ;
     if(ret < 0) {
         std:: cout << __FILE__ << "    " << __LINE__ << std:: endl ;
     }
@@ -23,7 +32,9 @@ void Fanotify::SetIpPort(std::string ip, int port) {
     this->port = port ;
 }
 
-void Fanotify :: InitFanotify() {
+void Fanotify :: InitFanotify(std::string ip, int port) {
+    this->ip = ip ;
+    this->port = port ;
     servFd = -1 ;
     ep = std::make_shared<epOperation>() ;
 }
@@ -72,7 +83,7 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
     int len = 0 ;
     int num = 0 ;
     ls.clear() ;
-    //使用select监听
+    cout << "epwait" << endl ;
     if((num = ep->wait(-1, fdList)) > 0) {
         for(int i=0; i<num; i++) {
             ActiveNode anode ;
@@ -84,9 +95,15 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                 in.fileFd = servFd ;
                 in.type = -1 ;
                 in.fanFd = fdList[i] ;
+                ls.push_back(in) ;
+                fdList.clear() ;
                 return ;
             }
             len = read(fdList[i], buf, sizeof(buf)) ;
+            if(len < 0) {
+                cout << __LINE__ <<"   " __FILE__ << endl ;
+                return ;
+            }
             struct fanotify_event_metadata* metadata ;
             char path[PATH_MAX] ;
             int pathLen ;
@@ -104,9 +121,10 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                     cout << __LINE__ << "   " << __FILE__ << endl ;
                     return  ;
                 }
-                ret = ProcessBaseFlag(ret) ;     
+                ret = ProcessBaseFlag(ret, metadata) ;     
                 if(ret < 0) {
                     //关闭被监控描述符的文件描述符
+                    HandlePerm(FAN_DENY, fdList[i], metadata);
                     close(metadata->fd) ;
                     continue ;
                 }
@@ -115,8 +133,9 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                 in.path = path ;
                 if(ret == OPEN_PERMIT) {
                     anode = AddCountIfExist(fdList[i]) ;                   
-                    if(anode.count != 0){ 
-                        HandlePerm(fdList[i], metadata) ;
+                    if(anode.count > 1){ 
+                        //要是
+                        HandlePerm(FAN_ALLOW, fdList[i], metadata) ;
                         DetectEvent(fdList[i], FAN_CLOSE) ;
                         continue ;
                     }
@@ -130,16 +149,18 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                 }
                 //关闭文件
                 else {  
-                    int ret = Fanotify::Modify(path, metadata) ;
+                     int ret = Fanotify::Modify(path, metadata) ;
                     //引用计数不为0的话，继续减
                     if(ret != 0) {
                         continue ;
                     }
                     //是关闭的文件的事件
-                    in.type = 0 ;
+                    in.type = 2 ;
                 }
-                if(anode.isBackUp != -1) 
+                //关闭文件的时候不作添加操作
+                if(anode.isBackUp != -1) {
                     Fanotify::activeMap.push_back(anode) ;
+                }
                 ls.push_back(in) ;
             }       
         }
@@ -149,6 +170,7 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
 
 struct ActiveNode Fanotify::AddCountIfExist(int fanFd) {
     struct ActiveNode node ;
+    node.count = 1 ;
     int len = Fanotify::activeMap.size() ;
     for(int i=0; i<len; i++) {
         if(Fanotify::activeMap[i].fanFd == fanFd) {
@@ -176,6 +198,7 @@ int Fanotify::Modify(string path, struct fanotify_event_metadata* metadata) {
             activeMap[i].fileFd = metadata->fd ;           
             activeMap[i].count-- ;
             count = activeMap[i].count ;
+            break ;
         }
     }
     return count ;
@@ -184,6 +207,7 @@ int Fanotify::Modify(string path, struct fanotify_event_metadata* metadata) {
 int Fanotify:: ConnectServer() {
     servFd = Connect(ip.c_str(), port) ;
     if(servFd < 0) {
+        cout << __LINE__ << "     " << __FILE__ << endl ;
         return -1 ;
     }
     isConnect = 1 ;
@@ -227,47 +251,36 @@ void Fanotify:: OperateFile(struct fanotify_event_metadata* metadata) {
 }
 
 //处理标志位
-int Fanotify::ProcessBaseFlag(int flag) {
-    int ret = -1 ;
+int Fanotify::ProcessBaseFlag(int flag, struct fanotify_event_metadata* metadata) {
+    if(servFd == -1 || isConnect == 0) {
+        //还没建立过链接
+        servFd= ConnectServer() ;
+        if(servFd < 0) {
+            //不会给内核发消息，用户打不开文件
+            return -1;
+        }
+    }
     switch(flag) {
-    //打开前将文件发送给服务器
-    case OPEN_PERMIT :
-        if(servFd == -1 || isConnect == 0) {
-            //还没建立过链接
-            servFd= ConnectServer() ;
-            if(ret < 0) {
-                //不会给内核发消息，用户打不开文件
-                return -1;
-            }
-        }
-        else {
-            if(ret < 0) {
-                return -1 ;
-            }
-        }
-        ////////////////////////////////
+        //打开前将文件发送给服务器
+    case OPEN_PERMIT:
         ///向内核发送消息，设置允许打开标志位，并设置监控事件open close
-      //  HandlePerm(fanFd, metadata) ;
-        //修改文件内容
-     //   OperateFile(metadata) ;
         return OPEN_PERMIT ;
         //监控关闭事件
-        //DetectClose(fanFd) ;
-        //设置关闭事件
-        //准备使用inotify进行管理
-        //fanotify在这一方面功能较少
-    case CLOSE :
-        return CLOSE ;
+    case CLOSED :
+    case CLOSE_MODIFY :
+        return CLOSED ;
     }
+    return -1 ;
 }
 
 
 int Fanotify::GetEvent(int fanFd, const struct fanotify_event_metadata* metadata, int len) {
     std::string paths ;
-    int flag = 1 ;
+    int flag = 0 ;
     while(FAN_EVENT_OK(metadata, len)) {
         //处理matadata
         if(metadata->mask&FAN_OPEN) {
+            cout << "打开"<< endl ;
             flag = OPENING ;
         }   
         if(metadata->mask&FAN_CLOSE) {
@@ -279,24 +292,23 @@ int Fanotify::GetEvent(int fanFd, const struct fanotify_event_metadata* metadata
             }
         }
         if(metadata->mask&FAN_MODIFY){
+            cout << "修改"<< endl ;
             flag = MODIFY ;
         }
         if(metadata->mask&FAN_OPEN_PERM) {
+            cout <<"权限检查"<< endl ;
             flag = OPEN_PERMIT ;
-        //    HandlePerm(fanFd, metadata) ;
-            //操作文件
-       //     DetectOpenClose(fanFd) ;
         }
         metadata = FAN_EVENT_NEXT(metadata, len) ;
     }   
     return flag ;
 }   
 
-int Fanotify::HandlePerm(int fanFd, const struct fanotify_event_metadata *metadata) {
+int Fanotify::HandlePerm(int flag, int fanFd, const struct fanotify_event_metadata *metadata) {
     struct fanotify_response response_struct;
     int ret;
     response_struct.fd = metadata->fd;
-    response_struct.response = FAN_ALLOW;
+    response_struct.response = flag;
     ret = write(fanFd, &response_struct, sizeof(response_struct));
     if (ret < 0)
         return ret;

@@ -1,0 +1,141 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ALIVE	model.h	/^const int ALIVE = 6;$/;"	v
+Amac	model.h	/^  char Amac[128];$/;"	m	struct:packet
+BUFF_SIZE	model.h	/^const int BUFF_SIZE = 4096;$/;"	v
+CC	Makefile	/^CC = g++$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -lpthread -g -std=c++11 -w$/;"	m
+CLOSE	model.h	/^const int CLOSE = 2;$/;"	v
+Close_send	FileOptions.cpp	/^void File_Opt::Close_send(int sockfd, struct basic *bufp) {$/;"	f	class:File_Opt
+Cond	Locker.h	/^  Cond() {$/;"	f	class:Cond
+Cond	Locker.h	/^class Cond {$/;"	c
+Do_Inactivelink	FileOptions.cpp	/^void File_Opt::Do_Inactivelink(client_structure *user_data, int efd,$/;"	f	class:File_Opt
+Do_Link	SocketEpoll.cpp	/^void Do_Link(client_structure *users, int efd, struct basic *b, File_Opt &f) {$/;"	f
+EPOLLOPTION	SocketEpoll.h	/^const unsigned int EPOLLOPTION = EPOLLONESHOT | EPOLLIN | EPOLLET;$/;"	v
+ERR_EXIT	model.h	/^inline void ERR_EXIT(const char *m) {$/;"	f
+Epoll	SocketEpoll.h	/^  Epoll() {}$/;"	f	class:Epoll
+Epoll	SocketEpoll.h	/^class Epoll {$/;"	c
+File_Opt	FileOptions.h	/^  File_Opt() {}$/;"	f	class:File_Opt
+File_Opt	FileOptions.h	/^  File_Opt(int _efd, int port, char *ip) {}$/;"	f	class:File_Opt
+File_Opt	FileOptions.h	/^class File_Opt : public Socket {$/;"	c
+File_Recv_Print	FileOptions.cpp	/^void File_Recv_Print(int sockfd, int events, void *arg, File_Opt &f) {$/;"	f
+File_Send_Print	FileOptions.cpp	/^void File_Send_Print(int sockfd, int events, void *arg, File_Opt &f) {$/;"	f
+Heap_Timer	Timer.h	/^  Heap_Timer(int delay) { expire = time(NULL) + delay; }$/;"	f	class:Heap_Timer
+Heap_Timer	Timer.h	/^class Heap_Timer {$/;"	c
+Heap_down	Timer.cpp	/^void Time_Heap::Heap_down(int hole) {$/;"	f	class:Time_Heap
+Length	Timer.h	/^const int Length = 1000;$/;"	v
+Locker	Locker.h	/^  Locker() {$/;"	f	class:Locker
+Locker	Locker.h	/^class Locker {$/;"	c
+MAX_EVENTS	model.h	/^const int MAX_EVENTS = 1000;$/;"	v
+OPEN	model.h	/^const int OPEN = 1;$/;"	v
+ObjFile	Makefile	/^ObjFile = $(patsubst %.cpp,%.o,$(SrcFile))$/;"	m
+Open_recv	FileOptions.cpp	/^void File_Opt::Open_recv(int sockfd, struct basic *bufp) {$/;"	f	class:File_Opt
+Open_send	FileOptions.cpp	/^void File_Opt::Open_send(int sockfd, struct basic *bufp) {$/;"	f	class:File_Opt
+Org_num	Timer.h	/^  int Org_num = 0;$/;"	m	class:Time_Heap
+Org_size	Timer.h	/^  int Org_size;$/;"	m	class:Time_Heap
+Resize	Timer.cpp	/^void Time_Heap::Resize() {$/;"	f	class:Time_Heap
+Rtype	model.h	/^  int Rtype;$/;"	m	struct:packet
+Sem	Locker.h	/^  Sem() {$/;"	f	class:Sem
+Sem	Locker.h	/^class Sem {$/;"	c
+Socket	SocketEpoll.h	/^  Socket() {}$/;"	f	class:Socket
+Socket	SocketEpoll.h	/^class Socket : public Epoll {$/;"	c
+Socket_Print	SocketEpoll.cpp	/^void Socket_Print(int lfd, int events, void *arg, File_Opt &s) {$/;"	f
+SrcFile	Makefile	/^SrcFile = $(wildcard *.cpp)$/;"	m
+TARGET	Makefile	/^TARGET = Server$/;"	m
+ThreadPool	ThreadPool.cpp	/^ThreadPool<T>::ThreadPool(int pthread, int max_pthread)$/;"	f	class:ThreadPool
+ThreadPool	ThreadPool.cpp	/^class ThreadPool {$/;"	c	file:
+Time_Heap	Timer.h	/^  Time_Heap(Heap_Timer **_array, int size, int capacity)$/;"	f	class:Time_Heap
+Time_Heap	Timer.h	/^  Time_Heap(const int cap) : capacity(cap), cur_size(0) {$/;"	f	class:Time_Heap
+Time_Heap	Timer.h	/^class Time_Heap {$/;"	c
+Time_interval	Timer.h	/^const int Time_interval = 6000;$/;"	v
+_MODEL_H	model.h	2;"	d
+__FILE_OPTIONS_H_	FileOptions.h	2;"	d
+__LOCKER_H_	Locker.h	2;"	d
+__SOCKET_EPOLL_H_	SocketEpoll.h	2;"	d
+__TIMER__H__	Timer.h	2;"	d
+__WRITE_HEAD_H_	Write_Read.h	2;"	d
+_basic	SocketEpoll.cpp	/^struct basic _basic[MAX_EVENTS + 1];$/;"	v	typeref:struct:basic
+add_timer	Timer.cpp	/^void Time_Heap::add_timer(Heap_Timer *timer) {$/;"	f	class:Time_Heap
+address	Timer.h	/^  sockaddr_in address;$/;"	m	struct:client_structure
+append	ThreadPool.cpp	/^bool ThreadPool<T>::append(T *request, int _fd, int _events, void *_arg,$/;"	f	class:ThreadPool
+arg	SocketEpoll.h	/^  void *arg;   \/\/用来初始化回调函数的参数 \/\/泛型参数$/;"	m	struct:basic
+arg	ThreadPool.cpp	/^  void *arg;$/;"	m	class:ThreadPool	file:
+array	Timer.h	/^  Heap_Timer **array;$/;"	m	class:Time_Heap
+basic	SocketEpoll.h	/^struct basic {$/;"	s
+buf	Timer.h	/^  char buf[Length];$/;"	m	struct:client_structure
+buf	model.h	/^  char buf[BUFF_SIZE];$/;"	m	struct:packet
+bufp	SocketEpoll.h	/^  struct packet bufp;  \/\/数据结构体$/;"	m	struct:basic	typeref:struct:basic::packet
+call_back	SocketEpoll.h	/^  void (*call_back)(int fd, int events, void *arg, File_Opt &f);  \/\/回调函数$/;"	m	struct:basic
+call_back	Timer.h	/^  void (*call_back)(client_structure *, int, struct basic *, File_Opt &f);$/;"	m	class:Heap_Timer
+capacity	Timer.h	/^  int capacity;$/;"	m	class:Time_Heap
+client_structure	Timer.h	/^  client_structure() {}$/;"	f	struct:client_structure
+client_structure	Timer.h	/^struct client_structure {$/;"	s
+cond	Locker.h	/^  pthread_cond_t cond;$/;"	m	class:Cond
+count	Write_Read.cpp	/^int count = 0;$/;"	v
+create_connfd	SocketEpoll.cpp	/^void Socket::create_connfd(int lfd, int events, void *arg) {$/;"	f	class:Socket
+create_listenfd	SocketEpoll.cpp	/^void Socket::create_listenfd(int efd, int port, const char *ip) {$/;"	f	class:Socket
+cur_size	Timer.h	/^  int cur_size;$/;"	m	class:Time_Heap
+del_timer	Timer.cpp	/^void Time_Heap::del_timer(Heap_Timer *timer) {$/;"	f	class:Time_Heap
+efd	SocketEpoll.cpp	/^int efd;$/;"	v
+empty	Timer.h	/^  inline bool empty() const { return cur_size == 0; }$/;"	f	class:Time_Heap
+eventaddfd	SocketEpoll.cpp	/^void Epoll::eventaddfd(int efd, int events, struct basic *ev) {$/;"	f	class:Epoll
+eventdelfd	SocketEpoll.cpp	/^void Epoll::eventdelfd(int efd, struct basic *ev) {$/;"	f	class:Epoll
+events	SocketEpoll.h	/^  int events;  \/\/对应的监听事件$/;"	m	struct:basic
+events	ThreadPool.cpp	/^  int events;$/;"	m	class:ThreadPool	file:
+eventset	SocketEpoll.h	/^  void eventset(struct basic *_basic, int _fd,$/;"	f	class:Epoll
+expire	Timer.h	/^  time_t expire;$/;"	m	class:Heap_Timer
+f	ThreadPool.cpp	/^  File_Opt f;$/;"	m	class:ThreadPool	file:
+fd	SocketEpoll.h	/^  int fd;      \/\/要监听的文件描述符$/;"	m	struct:basic
+fd	ThreadPool.cpp	/^  int fd;$/;"	m	class:ThreadPool	file:
+hookPid	model.h	/^  int hookPid;$/;"	m	struct:packet
+ip	SocketEpoll.h	/^  char *ip = NULL;$/;"	m	class:Socket
+last_active	SocketEpoll.h	/^  long last_active;    \/\/最后的活动时间$/;"	m	struct:basic
+left	model.h	/^  long left, right;$/;"	m	struct:packet
+len	SocketEpoll.h	/^  int len;             \/\/数据长度$/;"	m	struct:basic
+lock	Locker.h	/^  bool lock() { return pthread_mutex_lock(&mutx) == 0; }$/;"	f	class:Locker
+lw_queue	ThreadPool.cpp	/^  Locker lw_queue;$/;"	m	class:ThreadPool	file:
+main	main.cpp	/^int main(int argc, char *argv[]) {$/;"	f
+mutx	Locker.h	/^  pthread_mutex_t mutx;$/;"	m	class:Cond
+mutx	Locker.h	/^  pthread_mutex_t mutx;$/;"	m	class:Locker
+num	FileOptions.cpp	/^static long num = 1;$/;"	v	file:
+num_max_pthread	ThreadPool.cpp	/^  int num_max_pthread;$/;"	m	class:ThreadPool	file:
+num_pthread	ThreadPool.cpp	/^  int num_pthread;$/;"	m	class:ThreadPool	file:
+packet	model.h	/^struct packet {$/;"	s
+pathname	model.h	/^  char pathname[PATH_MAX];$/;"	m	struct:packet
+pop_timer	Timer.cpp	/^void Time_Heap::pop_timer() {$/;"	f	class:Time_Heap
+port	SocketEpoll.h	/^  int port;$/;"	m	class:Socket
+post	Locker.h	/^  bool post() { return sem_post(&sem) == 0; }$/;"	f	class:Sem
+readn	Write_Read.cpp	/^int readn(int fd, void *buf, size_t size) {$/;"	f
+recvdata	FileOptions.cpp	/^void File_Opt::recvdata(int sockfd, int events, void *arg) {$/;"	f	class:File_Opt
+right	model.h	/^  long left, right;$/;"	m	struct:packet
+run	ThreadPool.cpp	/^void ThreadPool<T>::run() {$/;"	f	class:ThreadPool
+sem	Locker.h	/^  sem_t sem;$/;"	m	class:Sem
+senddata	FileOptions.cpp	/^void File_Opt::senddata(int fd, int events, void *arg) {$/;"	f	class:File_Opt
+set_noblock	SocketEpoll.cpp	/^int Socket::set_noblock(int fd) {$/;"	f	class:Socket
+signal	Locker.h	/^  bool signal() { return pthread_cond_signal(&cond) == 0; }$/;"	f	class:Cond
+sockfd	Timer.h	/^  int sockfd;$/;"	m	struct:client_structure
+stat	ThreadPool.cpp	/^  Sem stat;$/;"	m	class:ThreadPool	file:
+status	SocketEpoll.h	/^  int status;  \/\/是否在监听:1->在红黑树上(监听), 0->不在(不监听)$/;"	m	struct:basic
+stop	ThreadPool.cpp	/^  bool stop;$/;"	m	class:ThreadPool	file:
+threads	ThreadPool.cpp	/^  pthread_t *threads;$/;"	m	class:ThreadPool	file:
+tick	Timer.cpp	/^void Time_Heap::tick(File_Opt &s, struct basic *b) {$/;"	f	class:Time_Heap
+timer	Timer.h	/^  Heap_Timer *timer;$/;"	m	struct:client_structure
+top	Timer.cpp	/^Heap_Timer *Time_Heap::top() const {$/;"	f	class:Time_Heap
+unlock	Locker.h	/^  bool unlock() { return pthread_mutex_unlock(&mutx) == 0; }$/;"	f	class:Locker
+user_data	Timer.h	/^  client_structure *user_data;$/;"	m	class:Heap_Timer
+users	SocketEpoll.cpp	/^struct client_structure users[MAX_EVENTS];$/;"	v	typeref:struct:client_structure
+w_queue	ThreadPool.cpp	/^  list<T *> w_queue;$/;"	m	class:ThreadPool	file:
+wait	Locker.h	/^  bool wait() { return sem_wait(&sem) == 0; }$/;"	f	class:Sem
+wait	Locker.h	/^  bool wait() {$/;"	f	class:Cond
+worker	ThreadPool.cpp	/^void *ThreadPool<T>::worker(void *arg) {$/;"	f	class:ThreadPool
+writen	Write_Read.cpp	/^int writen(int fd, void *buf, size_t size) {$/;"	f
+~Cond	Locker.h	/^  ~Cond() {$/;"	f	class:Cond
+~File_Opt	FileOptions.h	/^  ~File_Opt() {}$/;"	f	class:File_Opt
+~Locker	Locker.h	/^  ~Locker() { pthread_mutex_destroy(&mutx); }$/;"	f	class:Locker
+~Sem	Locker.h	/^  ~Sem() { sem_destroy(&sem); }$/;"	f	class:Sem
+~ThreadPool	ThreadPool.cpp	/^ThreadPool<T>::~ThreadPool() {$/;"	f	class:ThreadPool
+~Time_Heap	Timer.h	/^  ~Time_Heap() {$/;"	f	class:Time_Heap

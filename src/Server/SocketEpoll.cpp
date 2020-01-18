@@ -83,7 +83,7 @@ void Socket::create_listenfd(int efd, int port, const char *ip) {
   memset(&serv, 0, sizeof(serv));
   serv.sin_family = PF_INET;
   serv.sin_port = htons(port);
-  serv.sin_addr.s_addr = INADDR_ANY;
+  inet_aton(ip, &serv.sin_addr);
   if (bind(listenfd, (struct sockaddr *)&serv, sizeof(serv)) < 0)
     ERR_EXIT("bind");
 

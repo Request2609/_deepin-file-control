@@ -73,6 +73,7 @@ struct Data {
 } ;
 
 
+void ModifyFile(int fd) ;
 //处理业务的入口
 int ProcessHandle(char argv[3][128]) ;
 //连接服务器
@@ -82,11 +83,11 @@ void SendData(struct InfoNode, int servFd) ;
 //接收服务端请求
 int RecvData(int servFd) ;
 //给服务器发送文件内容
-int SendFile(int servFd, const string& name) ;
+int SendFile(int servFd, const struct InfoNode& node) ;
 //给hook发送消息
 int SendHookMsg(struct Data data, int msgId, int& fd) ;
 //回复文件内容
-int RecoverRequest(int servFd) ;
+int RecoverRequest(const struct InfoNode& node, int servFd) ;
 //恢复文件内容
 int RecoverFile(struct Data data, int& fd) ;
 //处理中断信号

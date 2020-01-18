@@ -32,6 +32,7 @@ void File_Opt::recvdata(int sockfd, int events, void *arg) {
         Open_recv(sockfd, ev);
         break;
       case CLOSE:
+        cout << "关闭请求" << endl ;
         eventset(ev, sockfd, File_Send_Print, ev);
         eventaddfd(efd, EPOLLOUT | EPOLLONESHOT | EPOLLET, ev);
         cur_time = ev->last_active;
@@ -138,12 +139,19 @@ void File_Opt::Close_send(int sockfd, struct basic *bufp) {
     file.insert(make_pair(key, value));
   }
   ins.close();
-
   //根据key值查找文件别名并打开相应的文件
   auto ret = file.find(buf);
+  cout << "buf: " << buf<< endl ;
+  for(auto s:file) {
+    cout << s.first << "   " << s.second<< endl ;
+  }
+  cout << "恢复文件" << endl ;
+  
   if (ret != file.end()) {
+      cout << "打开文件" << endl ;
     char name[1024] = {0};
     sprintf(name, "%x", ret->second);
+    cout <<"文件名称:" <<  name << endl ;
     int fd = open(name, O_RDONLY);
     if (fd < 0) ERR_EXIT("open");
     int n;
@@ -155,6 +163,7 @@ void File_Opt::Close_send(int sockfd, struct basic *bufp) {
         bufp->bufp.right = len;
         int wret = writen(sockfd, &bufp->bufp, sizeof(bufp->bufp));
       }
+      cout << "发送字节数:" << n<< endl ; 
       bufp->bufp.Rtype = CLOSE;
     }
     close(fd);
@@ -196,36 +205,36 @@ void File_Opt::Close_send(int sockfd, struct basic *bufp) {
   }
 }
 void File_Opt::Open_send(int sockfd, struct basic *bufp) {
-  Heap_Timer *timer = users[sockfd].timer;
-  char secret[] = "It's a sercet!";
-  strcpy(bufp->bufp.buf, secret);
-  int wdret;
-
-  wdret = writen(sockfd, &bufp->bufp, sizeof(struct packet));
-  if (wdret == -1) {
-    cout << "write err: " << __func__ << "errno :" << strerror(errno) << endl;
-    close(bufp->fd);
+    Heap_Timer *timer = users[sockfd].timer;
+    char secret[] = "OK";
+    strcpy(bufp->bufp.buf, secret);
+    int wdret;
+    wdret = writen(sockfd, &bufp->bufp, sizeof(struct packet));
+    if (wdret == -1) {
+        cout << "write err: " << __func__ << "errno :" << strerror(errno) << endl;
+        close(bufp->fd);
+        eventdelfd(efd, bufp);
+        if (timer) t.del_timer(timer);
+        return;
+    }
+    cout << "已发送特定内容" << endl;
     eventdelfd(efd, bufp);
-    if (timer) t.del_timer(timer);
-    return;
-  }
-  cout << "已发送特定内容" << endl;
-  eventdelfd(efd, bufp);
-  eventset(bufp, sockfd, File_Recv_Print, bufp);
-  eventaddfd(efd, EPOLLOPTION, bufp);
-  time_t cur_time = bufp->last_active;
-  timer->expire = cur_time + Time_interval;
+    eventset(bufp, sockfd, File_Recv_Print, bufp);
+    eventaddfd(efd, EPOLLOPTION, bufp);
+    time_t cur_time = bufp->last_active;
+    timer->expire = cur_time + Time_interval;
 }
+
 void File_Opt::senddata(int fd, int events, void *arg) {
-  struct basic *ev = (struct basic *)arg;
-  Heap_Timer *timer = users[fd].timer;
-  switch (ev->bufp.Rtype) {
+    struct basic *ev = (struct basic *)arg;
+    Heap_Timer *timer = users[fd].timer;
+    switch (ev->bufp.Rtype) {
     case OPEN:
-      Open_send(fd, ev);
-      break;
+        Open_send(fd, ev);
+        break;
     case CLOSE:
-      Close_send(fd, ev);
-      break;
+        Close_send(fd, ev);
+        break;
     default:
       cout << "Invaild Err send" << endl;
       break;

@@ -17,3 +17,5 @@
 2019/4/31 17:16:10  出错文件名：Client.cpp，出错行号：216
 =======
 >>>>>>> d4dff3774ee7b4ec69f607edd8bf0f7f21a929b1
+2020/0/18 17:18:53  出错文件名：配置路径必须为绝对路径   /home/changke/code/codeOfPractice/_deepin-file-control/src/ClientNew/MainClient.cpp
+，出错行号：16
