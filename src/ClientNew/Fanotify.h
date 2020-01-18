@@ -70,6 +70,7 @@ public:
     int ProcessBaseFlag(int flag, struct fanotify_event_metadata* metadata) ;
     void SetIpPort(std::string ip, int port) ;
     void OperateFile(struct fanotify_event_metadata* metadata) ;
+    void ClearFile(int fd) ;
     int GetServFd() { return servFd ;}
     static std::shared_ptr<Fanotify> GetNotify() ;
     static int Modify(string path, struct fanotify_event_metadata* metadata) ;

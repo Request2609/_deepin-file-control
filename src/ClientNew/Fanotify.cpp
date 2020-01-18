@@ -19,6 +19,11 @@ Fanotify :: ~Fanotify() {
     }
 }
 
+void Fanotify::ClearFile(int fd) {
+    ftruncate(fd, 0) ;
+    lseek(fd, 0, 0) ;
+}
+
 void Fanotify:: DetectEvent(int fanFd, int mask) {
     string path = fdAbsolutePathPair[fanFd] ;
     int ret = fanotify_mark(fanFd, FAN_MARK_ADD, mask, AT_FDCWD, path.c_str()) ;
@@ -83,7 +88,6 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
     int len = 0 ;
     int num = 0 ;
     ls.clear() ;
-    cout << "epwait" << endl ;
     if((num = ep->wait(-1, fdList)) > 0) {
         for(int i=0; i<num; i++) {
             ActiveNode anode ;
@@ -92,6 +96,8 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
             char buf[4096];
             //服务器事件
             if(fdList[i] == servFd) {
+                //设置epolloneshot事件
+                ModifyServFd(EPOLLIN|EPOLLONESHOT) ;
                 in.fileFd = servFd ;
                 in.type = -1 ;
                 in.fanFd = fdList[i] ;
@@ -124,7 +130,7 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                 ret = ProcessBaseFlag(ret, metadata) ;     
                 if(ret < 0) {
                     //关闭被监控描述符的文件描述符
-                    HandlePerm(FAN_DENY, fdList[i], metadata);
+                    //HandlePerm(FAN_DENY, fdList[i], metadata);
                     close(metadata->fd) ;
                     continue ;
                 }
@@ -148,12 +154,13 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                     in.type = 1 ;
                 }
                 //关闭文件
-                else {  
-                     int ret = Fanotify::Modify(path, metadata) ;
+                else { 
+                    int ret = Fanotify::Modify(path, metadata) ;
                     //引用计数不为0的话，继续减
                     if(ret != 0) {
                         continue ;
                     }
+                    ClearFile(metadata->fd) ;
                     //是关闭的文件的事件
                     in.type = 2 ;
                 }
@@ -186,6 +193,7 @@ void Fanotify::Remove(int fanFd) {
     for(auto s=activeMap.begin(); s != activeMap.end(); s++) {
         if(s->fanFd == fanFd) {
             activeMap.erase(s) ;
+            break ;
         }
     }
 }

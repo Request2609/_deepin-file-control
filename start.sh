@@ -2,7 +2,7 @@
 cd ./src/Server/;
 make;
 cd -;
-cd ./src/Client/;
+cd ./src/ClientOldVersion/;
 make;
 cd -;
 cd ./src/Hook;

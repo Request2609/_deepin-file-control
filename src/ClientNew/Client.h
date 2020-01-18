@@ -23,6 +23,7 @@
 #include<thread>
 #include<signal.h>
 #include <memory>
+#include <sys/mman.h>
 #include"MsgQueue.h"
 #include "Fanotify.h"
 #include "ThreadPool.h"

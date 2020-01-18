@@ -59,6 +59,8 @@ signal.h
 -
 memory
 -
+sys/mman.h
+-
 MsgQueue.h
 /home/changke/code/codeOfPractice/_deepin-file-control/src/ClientNew/MsgQueue.h
 Fanotify.h
@@ -87,10 +89,6 @@ unistd.h
 -
 poll.h
 -
-Fanotify.h
-/home/changke/code/codeOfPractice/_deepin-file-control/src/ClientNew/Fanotify.h
-
-/home/changke/code/codeOfPractice/_deepin-file-control/src/ClientNew/Fanotify.cpp
 Fanotify.h
 /home/changke/code/codeOfPractice/_deepin-file-control/src/ClientNew/Fanotify.h
 
