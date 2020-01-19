@@ -99,6 +99,7 @@ void File_Opt::Open_recv(int sockfd, struct basic *bufp) {
     if (!strcmp(bufp->bufp.buf, "EOF")) {
       break;
     }
+    cout << "写的范围:" << bufp->bufp.left << "  ----  " << bufp->bufp.right << endl ;
     int len = bufp->bufp.right - bufp->bufp.left;
     lseek(fd, bufp->bufp.left, SEEK_SET);
     int wret = writen(fd, bufp->bufp.buf, len);

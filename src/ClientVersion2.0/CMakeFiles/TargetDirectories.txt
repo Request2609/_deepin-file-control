@@ -1,0 +1,3 @@
+/home/changke/code/codeOfPractice/_deepin-file-control/src/ClientVersion2.0/CMakeFiles/rebuild_cache.dir
+/home/changke/code/codeOfPractice/_deepin-file-control/src/ClientVersion2.0/CMakeFiles/Client.dir
+/home/changke/code/codeOfPractice/_deepin-file-control/src/ClientVersion2.0/CMakeFiles/edit_cache.dir

@@ -7,7 +7,7 @@ using namespace std ;
 int main() {
     char buf[1024] ;
     bzero(buf, sizeof(buf)) ;
-    int fd = open("tests/aa/test.txt", O_RDWR) ;
+    int fd = open("test/aaa/1.cpp", O_RDWR) ;
     cout << "文件打开完成！"<< endl ;
     int size = read(fd, buf, sizeof(buf)) ;
     cout << "数据: " << endl ; 
