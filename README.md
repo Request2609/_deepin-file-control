@@ -1,6 +1,6 @@
 
 
-### 【管控客户端第第2版】
+### 【管控客户端第2版】
 
 <div class="markdown-body">
           <h2>
@@ -124,11 +124,11 @@ OPEN事件，使用FAN_CLOSE来监控CLOSE事件。
 
 - 和服务器正常连接视频演示
 
-[![image-20200119190036639](images/1.png)](https://github.com/Request2609/_deepin-file-control/blob/master/images/connected.mp4?raw=true)
+[![image-20200119190036639](images/2.png)](https://github.com/Request2609/_deepin-file-control/blob/master/images/connected.mp4?raw=true)
 
 - 连不上服务器视频演示
 
-[![image-20200119190326073](images/2.png)](https://github.com/Request2609/_deepin-file-control/blob/master/images/unconnect.mp4?raw=true)
+[![image-20200119190326073](images/1.png)](https://github.com/Request2609/_deepin-file-control/blob/master/images/unconnect.mp4?raw=true)
 
 
 
