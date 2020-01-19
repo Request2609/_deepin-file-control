@@ -124,11 +124,13 @@ OPEN事件，使用FAN_CLOSE来监控CLOSE事件。
 
 - 和服务器正常连接视频演示
 
-<video id="video" controls="" > <source id="mp4" src="images/connected.mp4" type="video/mp4"> </video>
+[![image-20200119190036639](images/1.png)](images/connnected.mp4)
 
 - 连不上服务器视频演示
 
-<video id="video" controls="" > <source id="mp4" src="images/unconnect.mp4" type="video/mp4"> </video>
+[![image-20200119190326073](/home/changke/code/codeOfPractice/_deepin-file-control/images/2.png)](images/unconnect.mp4)
+
+
 
 ### 总结
 
