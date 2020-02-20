@@ -6,7 +6,7 @@
 int ProcessHandle(char info[3][128]) {
 
     std::shared_ptr<threadPool> pool = std::make_shared<threadPool>(8) ;
-    vector<InfoNode> ls ;
+    std::vector<InfoNode> ls ;
  //   signal(SIGINT, SigHandle) ;
     std::shared_ptr<Fanotify> notify = Fanotify::GetNotify() ;
     int port = atoi(info[1]) ;
@@ -41,7 +41,7 @@ int Connect(const char* ip, const int port) {
     
     int fd = socket(AF_INET, SOCK_STREAM, 0) ;
     if(fd < 0) {
-        cout << __LINE__ <<"   " << __FILE__ << endl ;
+        std::cout << __LINE__ <<"   " << __FILE__ << std::endl ;
         return 0 ;
     }
     
@@ -50,12 +50,12 @@ int Connect(const char* ip, const int port) {
     addr.sin_port = htons(port) ;
     int ret = inet_aton(ip, &addr.sin_addr) ;
     if(ret < 0) {
-       cout << __LINE__ <<"   " << __FILE__ << endl ;
+        std::cout << __LINE__ <<"   " << __FILE__ << std::endl ;
         return -1 ;
     }
     ret = connect(fd, (struct sockaddr*)&addr, sizeof(addr)) ;
     if(ret < 0) {
-        cout << __LINE__ <<"   " << __FILE__ <<"    " << strerror(errno)<< endl ;
+        std::cout << __LINE__ <<"   " << __FILE__ <<"    " << strerror(errno)<< std::endl ;
         return -1 ;
     }
     return fd ;
@@ -120,7 +120,7 @@ int  SendFile(int servFd, const struct InfoNode& node) {
     fstat(node.fileFd, &st) ;
     char* p = (char*)mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, node.fileFd, 0) ;
     if(p == NULL) {
-        cout << __FILE__ << "     " << __LINE__ << endl ;
+        std::cout << __FILE__ << "     " << __LINE__ << std::endl ;
         return -1;
     }
     int sum = 0 ;

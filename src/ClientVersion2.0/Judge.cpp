@@ -70,10 +70,10 @@ int IsMonitorDir(const char* hookPath, const char* monitorPath) {
 
 //判断文件是否已经备份过了
 //备份过的话,就不用给服务器发送消息了
-//否则的话,往map里面增加元素,并给服务器发送消息
-int IsStoragedFile(Msg msg, map<string, int>&stFiles) {
+//否则的话,往std::map里面增加元素,并给服务器发送消息
+int IsStoragedFile(Msg msg, std::map<std::string, int>&stFiles) {
 
-    map<string, int>::iterator iter = stFiles.find(msg.buf.pathName);
+    std::map<std::string, int>::iterator iter = stFiles.find(msg.buf.pathName);
     //找到的话,就将文件的值加1
     if(iter != stFiles.end()) {
          iter->second++ ;   
@@ -81,21 +81,21 @@ int IsStoragedFile(Msg msg, map<string, int>&stFiles) {
     }
     //没找到的话,就创建一个pair
     else {
-        pair<string, int> tmp  ;
+        std::pair<std::string, int> tmp  ;
         tmp.first = msg.buf.pathName ;
         tmp.second = 1 ;
         stFiles.insert(tmp);
         return 0 ;
     }
-    map<string, int>::iterator iters;
+    std::map<std::string, int>::iterator iters;
     for(iters = stFiles.begin(); iters != stFiles.end(); iters++) {
     }
 }
 
 //判断是否是最后一次close请求
-int IsLastRecoverRequest(Msg& msg, map<string, int>&recFile) {
+int IsLastRecoverRequest(Msg& msg, std::map<std::string, int>&recFile) {
     
-    map<string, int>::iterator iter = recFile.find(msg.buf.pathName);
+    std::map<std::string, int>::iterator iter = recFile.find(msg.buf.pathName);
 
     if(iter != recFile.end()) {
          iter->second -- ;          

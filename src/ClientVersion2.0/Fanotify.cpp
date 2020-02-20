@@ -1,7 +1,7 @@
 #include "Fanotify.h"
 
 std::shared_ptr<Fanotify>Fanotify::notify = nullptr ;
-vector<ActiveNode> Fanotify::activeMap ;
+std::vector<ActiveNode> Fanotify::activeMap ;
 
 Fanotify :: Fanotify() {
 }
@@ -25,7 +25,7 @@ void Fanotify::ClearFile(int fd) {
 }
 
 void Fanotify:: DetectEvent(int fanFd, int mask) {
-    string path = fdAbsolutePathPair[fanFd] ;
+    std::string path = fdAbsolutePathPair[fanFd] ;
     int ret = fanotify_mark(fanFd, FAN_MARK_ADD, mask, AT_FDCWD, path.c_str()) ;
     if(ret < 0) {
         std:: cout << __FILE__ << "    " << __LINE__ << std:: endl ;
@@ -85,7 +85,7 @@ void Fanotify::SetNotifyObject(std::string path) {
     }  
 }
 
-void Fanotify:: StartListen(vector<InfoNode>&ls) {
+void Fanotify:: StartListen(std::vector<InfoNode>&ls) {
     int len = 0 ;
     int num = 0 ;
     ls.clear() ;
@@ -108,7 +108,7 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
             }
             len = read(fdList[i], buf, sizeof(buf)) ;
             if(len < 0) {
-                cout << __LINE__ <<"   " <<__FILE__ << "    " << strerror(errno)<< endl ;
+                std::cout << __LINE__ <<"   " <<__FILE__ << "    " << strerror(errno)<< std::endl ;
                 return ;
             }
             struct fanotify_event_metadata* metadata ;
@@ -125,7 +125,7 @@ void Fanotify:: StartListen(vector<InfoNode>&ls) {
                 path[pathLen] = '\0' ;
                 int ret = GetEvent(fdList[i], metadata, len) ;
                 if(ret < 0) {
-                    cout << __LINE__ << "   " << __FILE__ << endl ;
+                    std::cout << __LINE__ << "   " << __FILE__ << std::endl ;
                     return  ;
                 }
                 ret = ProcessBaseFlag(ret, metadata) ;     
@@ -198,7 +198,7 @@ void Fanotify::Remove(int fanFd) {
     }
 }
 
-int Fanotify::Modify(string path, struct fanotify_event_metadata* metadata) {
+int Fanotify::Modify(std::string path, struct fanotify_event_metadata* metadata) {
     int count = 0 ;
     int len = activeMap.size() ;
     for(int i=0; i<len; i++) {
@@ -215,7 +215,7 @@ int Fanotify::Modify(string path, struct fanotify_event_metadata* metadata) {
 int Fanotify:: ConnectServer() {
     servFd = Connect(ip.c_str(), port) ;
     if(servFd < 0) {
-        cout << __LINE__ << "     " << __FILE__ << endl ;
+        std::cout << __LINE__ << "     " << __FILE__ << std::endl ;
         return -1 ;
     }
     isConnect = 1 ;
@@ -234,7 +234,7 @@ void Fanotify :: ModifyServFd(int mask) {
     ep->change(servFd, mask) ;
 }
 
-ActiveNode* Fanotify::GetHandleByPath(string name) {
+ActiveNode* Fanotify::GetHandleByPath(std::string name) {
     struct ActiveNode an ;
     int len = activeMap.size() ;
     for(int i=0; i<len; i++) {

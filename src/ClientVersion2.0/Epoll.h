@@ -8,7 +8,6 @@
 #include <poll.h>
 #include "Fanotify.h"
 
-using namespace std ;
 
 class epOperation {
 public :

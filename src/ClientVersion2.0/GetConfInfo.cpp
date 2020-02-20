@@ -1,7 +1,6 @@
 #include"GetConfInfo.h"
 #include"Client.h"
 #include"GetLocalInfo.h"
-using namespace std ;
 
 int GetConfInfo(const char*confPath, char info[3][128]) {
     
@@ -11,7 +10,7 @@ int GetConfInfo(const char*confPath, char info[3][128]) {
     }
     FILE* fp = fopen(confPath, "r") ;
     if(fp == NULL) {
-        cout << strerror(errno) << endl ;
+        std::cout << strerror(errno) << std::endl ;
         printError(__FILE__, __LINE__) ;
         return 0 ;
     }

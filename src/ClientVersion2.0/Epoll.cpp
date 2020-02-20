@@ -42,16 +42,16 @@ void epOperation :: del(int epFd, int fd) {
 }
 
 //将活跃的事件全加入到clList
-int epOperation :: wait(int64_t timeout, vector<int>&fdList) {
+int epOperation :: wait(int64_t timeout, std::vector<int>&fdList) {
     int eventNum ;
     //struct epoll_event epFd_[200] ;
     try{ 
         eventNum = epoll_wait(epFd, &(*epFds.begin()), 200, timeout) ;
-    }catch(exception e) {
-        cout << e.what() ;
+    }catch(std::exception e) {
+        std::cout << e.what() ;
     }
     if(eventNum < 0) {
-        cout << eventNum << "           错误：" << strerror(errno) << endl ;
+        std::cout << eventNum << "           错误：" << strerror(errno) << std::endl ;
         return -1 ;
     }
     
