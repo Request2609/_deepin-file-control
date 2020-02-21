@@ -17,11 +17,13 @@ public :
         epFds.reserve(nfds) ;
     }   
 
-    ~epOperation() { close(epFd) ; }
+    ~epOperation() { 
+        close(epFd) ; 
+    }
     static void del(int epFd, int fd) ;
 public :
     int getEpFd() {return epFd ;}
-    int  wait(int64_t timeout, vector<int>&fdList) ;
+    int  wait(int64_t timeout, std::vector<int>&fdList) ;
     void add(int fd, int events) ;
     void change(int fd, int events) ;
     void del(int fd) ;

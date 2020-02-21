@@ -35,11 +35,11 @@ struct InfoNode {
     int fileFd; 
     int fanFd ;
     int type ;
-    string path ;
+    std::string path ;
 } ;
 
 struct ActiveNode {
-    string path ;
+    std::string path ;
     int fanFd ;
     int fileFd ;
     //是否已经备份成功
@@ -58,7 +58,7 @@ public:
     int GetNotifyFD() ;
     //添加引用计数
     struct ActiveNode AddCountIfExist(int fanFd) ;
-    void StartListen(vector<InfoNode>&) ;
+    void StartListen(std::vector<InfoNode>&) ;
     void DetectEvent(int fanFd, int mask) ;
     void DetectWrite() ;
     int ConnectServer() ;
@@ -73,8 +73,8 @@ public:
     void ClearFile(int fd) ;
     int GetServFd() { return servFd ;}
     static std::shared_ptr<Fanotify> GetNotify() ;
-    static int Modify(string path, struct fanotify_event_metadata* metadata) ;
-    static ActiveNode* GetHandleByPath(string name) ;
+    static int Modify(std::string path, struct fanotify_event_metadata* metadata) ;
+    static ActiveNode* GetHandleByPath(std::string name) ;
     static void Remove(int) ;
     void ModifyServFd(int mask) ;
     //开始监听函数
@@ -83,13 +83,13 @@ private:
     std::string ip ;
     int port ;
     int servFd ;
-    vector<int>fdList ;
+    std::vector<int>fdList ;
     //使用单实例模式
     static std::shared_ptr<Fanotify>notify ;
     std::map<int, std::string>fdAbsolutePathPair ;
     //第一个是正在备份的文件的绝对路径，
     static std::vector<ActiveNode> activeMap;
-    shared_ptr<epOperation>ep ;
+    std::shared_ptr<epOperation>ep ;
 };
 
 
